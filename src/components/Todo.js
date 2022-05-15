@@ -1,10 +1,23 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import usePrevious from "./usePrevious";
 
+// function usePrevious(value) {
+//     const ref = useRef();
+//     useEffect(() => {
+//       ref.current = value;
+//     });
+//     return ref.current;
+// }
+  
 export default function Todo(props){
+    const editFieldRef = useRef(null);
+    const editButtonRef = useRef(null);
+
     // const [変数, 変数の値を変更する関数] = 変数のデフォルト値
     const [isEditing, setEditing] = useState(false);
-
     const [newName, setNewName] = useState('');
+
+    const wasEditing = usePrevious(isEditing);
 
     function handleChange(e) {
         setNewName(e.target.value);
@@ -34,10 +47,15 @@ export default function Todo(props){
                 type="text" 
                 value={newName}
                 onChange={handleChange}
+                ref={editFieldRef}
             />
           </div>
           <div className="btn-group">
-            <button type="button" className="btn todo-cancel" onClick={() => setEditing(false)}>
+            <button 
+                type="button" 
+                className="btn todo-cancel" 
+                onClick={() => setEditing(false)}
+            >
               Cancel
               <span className="visually-hidden">renaming {props.name}</span>
             </button>
@@ -69,7 +87,12 @@ export default function Todo(props){
               </label>
             </div>
             <div className="btn-group">
-              <button type="button" className="btn" onClick={() => setEditing(true)}>
+              <button 
+                type="button" 
+                className="btn" 
+                onClick={() => setEditing(true)}
+                ref={editButtonRef}
+            >
                 Edit <span className="visually-hidden">{props.name}</span>
               </button>
               <button
@@ -82,6 +105,16 @@ export default function Todo(props){
             </div>
         </div>
     );
+      
+    useEffect(() => {
+        if (!wasEditing && isEditing) {
+          editFieldRef.current.focus();
+        }
+        if (wasEditing && !isEditing) {
+          editButtonRef.current.focus();
+        }
+        //第二引数の配列の中の値が変更された場合にのみ、useEffectが実行される。(無くても良い。)
+    }, [wasEditing, isEditing]);
       
     return <li className="todo">{isEditing ? editingTemplate : viewTemplate}</li>;
     //条件に続いて疑問符 (?)、そして条件が真値であった場合に実行する式、その次にコロン (:) が続き、条件が偽値であった場合に実行する式が来る。

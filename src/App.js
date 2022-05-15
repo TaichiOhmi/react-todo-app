@@ -4,9 +4,19 @@ import Form from "./components/Form";
 import FilterButton from "./components/FilterButton";
 import Todo from "./components/Todo";
 
+const FILTER_MAP = {
+  ALL: () => true,
+  Active: task => !task.completed,
+  Completed: task=> task.completed
+}
+
+const FILTER_NAMES = Object.keys(FILTER_MAP);
+
 function App(props) {
 
   const [tasks, setTasks] = useState(props.tasks);
+
+  const [filter, setFilter] = useState('ALL');
 
   function toggleTaskCompleted(id){
     const updatedTasks = tasks.map(task => {
@@ -15,10 +25,24 @@ function App(props) {
         // use objeect spread to make a new object
         // whose `completed` prop has been inverted
         return {...task, completed: !task.completed}
+        //...（Spread構文）を使うと、配列リテラル中に既存の配列やオブジェクトを展開できる。この例の場合、task オブジェクトを展開し、プロパティ名が被った場合は後に指定したオブジェクトの値で上書きされる性質を利用してcompletedを上書きしている。
       }
       return task;
     });
     setTasks(updatedTasks);
+  }
+
+  function editTask(id, newName) {
+    // tasks配列をmap関数で一つずつ回す。
+    const editedTaskList = tasks.map(task => {
+      // if this task has the same ID as the edited task
+      if (id === task.id) {
+        //
+        return {...task, name: newName}
+      }
+      return task;
+    });
+    setTasks(editedTaskList);
   }
 
   function deleteTask(id) {
@@ -27,7 +51,7 @@ function App(props) {
     setTasks(remainingTasks);
   }
 
-  const taskList = tasks.map(task => (
+  const taskList = tasks.filter(FILTER_MAP[filter]).map(task => (
     <Todo 
     id={task.id} 
     name={task.name} 
@@ -36,6 +60,16 @@ function App(props) {
     //reactでは一意な key でコンポーネントを管理する。
     toggleTaskCompleted={toggleTaskCompleted}
     deleteTask={deleteTask}
+    editTask={editTask}
+    />
+  ));
+
+  const filterList = FILTER_NAMES.map(name => (
+    <FilterButton 
+      key = {name} 
+      name = {name}
+      isPressed = {name === filter}
+      setFilter = {setFilter}
     />
   ));
 
@@ -54,7 +88,7 @@ function App(props) {
       <h1>TodoMatic</h1>
       <Form  addTask={addTask}/>
       <div className="filters btn-group stack-exception">
-        <FilterButton />
+      {filterList}
       </div>
       <h2 id="list-heading">
         {headingText}
